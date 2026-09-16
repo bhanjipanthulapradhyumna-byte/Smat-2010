@@ -1,0 +1,76 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#080a0d"><title>SMAT</title><link rel="icon" href="/logo.svg"><style>
+:root{--bg:#080a0d;--panel:#101318;--panel2:#151920;--line:#252b34;--text:#f3f5f7;--muted:#929ba8;--accent:#dff7ff;--ok:#62e59d;--bad:#ff7187}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{overflow-x:hidden}
+header{height:58px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 14px;gap:10px;background:#0c0f13;position:sticky;top:0;z-index:10}.brand{display:flex;align-items:center;gap:8px;font-size:19px;font-weight:800;letter-spacing:-.03em}.brand img{width:27px;height:27px}.spacer{flex:1}.topnav{display:none}.actions{display:flex;gap:6px}.actions button,button{background:#171b21;border:1px solid var(--line);color:#dfe4ea;padding:8px 11px;border-radius:8px;font-weight:650}.actions .secondary{display:none}.run{background:var(--accent)!important;color:#0c1418!important;border-color:var(--accent)!important}
+main{min-height:calc(100vh - 58px);display:flex;flex-direction:column}.left{order:2;background:var(--panel);border-top:1px solid var(--line);padding:10px 12px}.center{order:1;display:flex;flex-direction:column;min-width:0}.right{order:3;background:var(--panel);border-top:1px solid var(--line);padding-bottom:18px}.section{padding:6px 0}.label{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin:4px 0 9px}.project{font-weight:750;padding:9px 10px;border-radius:8px;background:#171b21;margin-bottom:8px}.tools{display:flex;gap:7px;margin-bottom:8px}.tools button{flex:1;font-size:12px}.file{padding:9px 10px;border-radius:8px;font-size:13px;color:#d4dae2;display:flex;gap:8px;align-items:center}.file.active{background:#1b2027}.file small{margin-left:auto;color:#707987}
+.toolbar{min-height:42px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 12px;gap:8px}.tab{font-size:12px;font-weight:650}.toolbar .muted{color:var(--muted);margin-left:auto;font-size:10px}.editor{height:48vh;min-height:300px;display:grid;grid-template-columns:38px 1fr;overflow:hidden;background:#0c0f13;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;line-height:1.65}.numbers{padding:14px 7px 14px 0;text-align:right;color:#4d5662;user-select:none;overflow:hidden}.code{resize:none;width:100%;height:100%;border:0;outline:0;background:transparent;color:#dbe1e9;padding:14px 12px;font:inherit;line-height:1.65;white-space:pre;tab-size:4;overflow:auto}.status{min-height:38px;border-top:1px solid var(--line);display:flex;align-items:center;padding:7px 12px;color:var(--muted);font-size:11px;gap:14px;flex-wrap:wrap}.dot{width:6px;height:6px;border-radius:50%;background:var(--ok);display:inline-block;margin-right:6px}.shortcut{display:none}.card{padding:12px;border-bottom:1px solid var(--line)}.card h4{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:0 0 9px}.output{background:#0c0f13;border:1px solid var(--line);border-radius:8px;padding:11px;white-space:pre-wrap;font:12px/1.55 ui-monospace,monospace;min-height:105px;max-height:250px;overflow:auto}.workspace{font:12px/1.55 ui-monospace,monospace;color:#aeb6c2;white-space:pre-wrap}.bottomnav{display:none}
+@media(min-width:800px){main{display:grid;grid-template-columns:230px minmax(420px,1fr) 290px;height:calc(100vh - 58px)}.left{order:1;border-top:0;border-right:1px solid var(--line);overflow:auto;padding:10px 12px}.center{order:2}.right{order:3;border-top:0;border-left:1px solid var(--line);padding-bottom:0;overflow:auto}.editor{height:auto;flex:1}.actions .secondary{display:block}.shortcut{display:block;margin-left:auto}}
+</style></head><body>
+<header><div class="brand" id="brand"><img src="/logo.svg" alt="SMAT"><span>SMAT</span></div><div class="spacer"></div><div class="actions"><button class="secondary" id="save">Save</button><button class="secondary" id="saveAs">Save As</button><button class="run" id="run">▶ Run</button></div></header>
+<main>
+<aside class="left"><div class="section"><div class="label">Files</div><div class="project">SMAT Project</div><div class="tools"><button id="newFile">＋ New .m</button><button id="upload">↑ Upload</button></div><input id="fileInput" type="file" multiple hidden accept=".m,.txt,.csv"><div id="files"></div></div></aside>
+<section class="center"><div class="toolbar"><span class="tab" id="tab">main.m</span><span class="muted">GNU Octave • MATLAB-compatible</span></div><div class="editor"><div class="numbers" id="numbers"></div><textarea class="code" id="code" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea></div><div class="status"><span><span class="dot"></span><b id="status">Ready</b></span><span>Engine: <b id="cpu">Idle</b></span><span class="shortcut">Ctrl+Enter to run</span></div></section>
+<aside class="right"><div class="card"><h4>Output</h4><div class="output" id="output">Run the current file to see output here.</div></div><div class="card"><h4>Workspace</h4><div id="workspace" class="workspace">No variables returned.</div></div><div class="card"><h4>Execution</h4><div style="font-size:12px;line-height:1.8;color:#aab2bd">Time: <b id="time">—</b><br>Engine: GNU Octave</div></div></aside>
+</main><script>
+const defaultCode = `clc; clear; E = 200e9; b = 0.05; h = 0.10; L = 2; F = 1000;
+I = b*h^3/12;
+delta = F*L^3/(3*E*I);
+fprintf("Second moment of area: %.6e m^4\\\\n", I);
+fprintf("Beam deflection: %.6e m\\\\n", delta);
+`;
+
+let files = JSON.parse(localStorage.getItem("smat-files") || "null") || [
+  {name:"main.m", content:defaultCode, description:"Open now · 1.8 KB"},
+  {name:"beam.m", content:"function y = beam(x)\\ny = x.^2;\\nend", description:"Mechanical example"},
+  {name:"motor.m", content:"% Electrical analysis\\nR = 4; V = 12; I = V/R;", description:"Electrical analysis"},
+  {name:"simulation.m", content:"% Parameter sweep\\nfor k=1:10\\n disp(k)\\nend", description:"Parameter sweep"},
+  {name:"README.md", content:"# SMAT Project\\nProject notes", description:"Project notes"}
+];
+let active = "main.m";
+const code = document.getElementById("code"), numbers = document.getElementById("numbers");
+const output = document.getElementById("output"), status = document.getElementById("status");
+
+function renderFiles(){
+  const box = document.getElementById("files"); box.innerHTML="";
+  files.forEach(f=>{
+    const el=document.createElement("div"); el.className="file"+(f.name===active?" active":"");
+    el.innerHTML=`<span>${f.name.endsWith(".m")?"▣":"▤"}</span><span>${f.name}</span><small>⋯</small>`;
+    el.onclick=()=>openFile(f.name); box.appendChild(el);
+  });
+}
+function openFile(name){
+  const f=files.find(x=>x.name===name); if(!f)return;
+  active=name; code.value=f.content; document.getElementById("tab").textContent=name; syncLines(); renderFiles();
+}
+function syncLines(){
+  const n=Math.max(1,code.value.split("\n").length);
+  numbers.innerHTML=Array.from({length:n},(_,i)=>i+1).join("<br>");
+}
+code.addEventListener("input",()=>{const f=files.find(x=>x.name===active);if(f){f.content=code.value;localStorage.setItem("smat-files",JSON.stringify(files))}syncLines()});
+code.addEventListener("scroll",()=>{numbers.scrollTop=code.scrollTop});
+function setStatus(v){status.textContent=v}
+async function run(){
+  const f=files.find(x=>x.name===active); if(!f)return;
+  setStatus("Running..."); document.getElementById("cpu").textContent="Busy"; output.textContent="Executing MATLAB-compatible code…";
+  const projectFiles=files.filter(x=>x.name!==active && x.name.endsWith(".m")).map(x=>({name:x.name,content:x.content}));
+  try{
+    const r=await fetch("/api/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({filename:active,code:code.value,projectFiles})});
+    const data=await r.json();
+    if(data.id) sessionStorage.setItem("smat-last-run",data.id);
+    if(data.id && (data.success || r.status===503)){ window.location.href="/output.html?run="+encodeURIComponent(data.id); return; }
+    throw new Error(data.error || "Execution failed");
+  }catch(e){output.textContent=e.message;setStatus("Failed");document.getElementById("cpu").textContent="Idle"}
+}
+document.getElementById("run").onclick=run; document.getElementById("runTop").onclick=run;
+document.getElementById("save").onclick=()=>{localStorage.setItem("smat-files",JSON.stringify(files));setStatus("Saved")};
+document.getElementById("saveAs").onclick=()=>{const name=prompt("Save current file as:",active);if(name){files.push({name,content:code.value,description:"Saved file"});active=name;renderFiles();document.getElementById("tab").textContent=name;localStorage.setItem("smat-files",JSON.stringify(files))}};
+document.getElementById("newFile").onclick=()=>{const name=prompt("New MATLAB file name:","newfile.m");if(name){files.push({name,content:"% New SMAT MATLAB file\\n",description:"New file"});openFile(name)}};
+document.getElementById("upload").onclick=()=>document.getElementById("fileInput").click();
+document.getElementById("fileInput").onchange=async(e)=>{
+  const fd=new FormData(); [...e.target.files].forEach(f=>fd.append("files",f));
+  try{const r=await fetch("/api/upload",{method:"POST",body:fd});const data=await r.json();data.forEach(f=>files.push({name:f.name,content:f.content,description:"Uploaded file"}));localStorage.setItem("smat-files",JSON.stringify(files));renderFiles()}catch(err){alert(err.message)}
+};
+document.addEventListener("keydown",e=>{if(e.ctrlKey&&e.key==="Enter"){e.preventDefault();run()}if(e.ctrlKey&&e.key.toLowerCase()==="s"){e.preventDefault();document.getElementById("save").click()}});
+document.getElementById("brand").onclick=()=>location.href="/";
+openFile("main.m");
+</script></body></html>

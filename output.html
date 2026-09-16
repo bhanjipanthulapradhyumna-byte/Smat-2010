@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SMAT — Output</title><link rel="icon" href="/logo.svg">
+<style>
+:root{--bg:#0b0d10;--panel:#111419;--line:#272c34;--text:#f1f3f5;--muted:#8d96a3;--ok:#5ee39a;--bad:#fb7185}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}header{height:60px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 18px;gap:10px;background:#0d0f12}.brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:20px;cursor:pointer}.brand img{width:28px}.spacer{flex:1}button{background:#15191f;color:#e8ecf1;border:1px solid var(--line);border-radius:7px;padding:9px 13px;cursor:pointer}.run{background:#eefbff;color:#10161a;border-color:#eefbff}.wrap{max-width:1200px;margin:0 auto;padding:26px}.title{display:flex;align-items:end;justify-content:space-between}.eyebrow{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.12em}.title h1{margin:5px 0 0;font-size:28px}.status{padding:7px 10px;border-radius:7px;border:1px solid var(--line);font-size:12px}.ok{color:var(--ok)}.bad{color:var(--bad)}.grid{display:grid;grid-template-columns:1.4fr .8fr;gap:14px;margin-top:20px}.card{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:15px}.card h3{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:0 0 11px}.terminal{background:#0d1014;border:1px solid var(--line);border-radius:7px;padding:14px;min-height:280px;white-space:pre-wrap;overflow:auto;font:13px/1.6 ui-monospace,monospace}.error{border-color:#5b2732}.meta{font-size:13px;line-height:2;color:#aeb6c2}.meta b{color:#eef1f4}.notice{margin-top:14px;padding:12px;border:1px solid #4b3a1e;background:#19150d;color:#d9c18a;border-radius:7px;font-size:13px}@media(max-width:800px){.grid{grid-template-columns:1fr}.wrap{padding:16px}}
+</style>
+</head>
+<body>
+<header><div class="brand" onclick="location.href='/'"><img src="/logo.svg"><span>SMAT</span></div><div class="spacer"></div><button onclick="location.href='/'">← Editor</button><button class="run" id="again">▶ Run Again</button></header>
+<div class="wrap">
+<div class="title"><div><div class="eyebrow">SMAT</div><h1>Execution Output</h1></div><div id="status" class="status">Loading…</div></div>
+<div class="grid">
+<div class="card"><h3>Command Window</h3><pre id="stdout" class="terminal">Loading…</pre><div id="notice"></div></div>
+<div>
+<div class="card"><h3>Execution</h3><div class="meta">Run ID<br><b id="id">—</b><br>File<br><b id="file">—</b><br>Execution time<br><b id="time">—</b><br>Created<br><b id="created">—</b></div></div>
+<div class="card" style="margin-top:14px"><h3>Workspace</h3><div id="workspace" style="font-size:13px;color:#9da6b2">No variables returned.</div></div>
+<div class="card" style="margin-top:14px"><h3>Errors</h3><pre id="stderr" class="terminal" style="min-height:100px">None</pre></div>
+</div>
+</div>
+</div>
+<script>
+const q=new URLSearchParams(location.search), runId=q.get("run");
+async function load(){
+ if(!runId){document.getElementById("stdout").textContent="No run ID.";return}
+ const r=await fetch("/api/runs/"+encodeURIComponent(runId)); const d=await r.json();
+ document.getElementById("id").textContent=d.id||runId;
+ document.getElementById("file").textContent=d.filename||"—";
+ document.getElementById("time").textContent=(d.executionTime??0)+" s";
+ document.getElementById("created").textContent=d.createdAt?new Date(d.createdAt).toLocaleString():"—";
+ document.getElementById("stdout").textContent=d.stdout||"(No standard output.)";
+ document.getElementById("stderr").textContent=d.stderr||"None";
+ const s=document.getElementById("status");s.textContent=d.success?"✓ Execution completed":"✕ Execution failed";s.className="status "+(d.success?"ok":"bad");
+ if(d.stderr) document.getElementById("stderr").classList.add("error");
+ if(d.engine) document.getElementById("notice").innerHTML='<div class="notice">Execution engine: '+d.engine+'. This is real server-side execution, not a simulated result.</div>';
+ if(Array.isArray(d.variables)&&d.variables.length) document.getElementById("workspace").textContent=JSON.stringify(d.variables,null,2);
+}
+document.getElementById("again").onclick=()=>location.href="/";load();
+</script>
+</body>
+</html>
